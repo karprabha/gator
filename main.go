@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
+	"github.com/karprabha/gator/internal/commands"
 	"github.com/karprabha/gator/internal/config"
 )
 
@@ -13,15 +15,32 @@ func main() {
 		log.Fatalf("Error reading config: %v", err)
 	}
 
-	err = cfg.SetUser("prabhakar")
-	if err != nil {
-		log.Fatalf("Error setting user: %v", err)
+	programState := &commands.State{Cfg: cfg}
+
+	cmds := commands.NewCommands()
+
+	cmds.Register("login", commands.HandlerLogin)
+
+	args := os.Args
+	if len(args) < 2 {
+		fmt.Println("Error: not enough arguments provided")
+		os.Exit(1)
 	}
 
-	updatedCfg, err := config.Read()
-	if err != nil {
-		log.Fatalf("Error reading config after update: %v", err)
+	cmdName := args[1]
+	cmdArgs := []string{}
+	if len(args) > 2 {
+		cmdArgs = args[2:]
 	}
 
-	fmt.Printf("Current Config: %+v\n", *updatedCfg)
+	cmd := commands.Command{
+		Name: cmdName,
+		Args: cmdArgs,
+	}
+
+	err = cmds.Run(programState, cmd)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		os.Exit(1)
+	}
 }
