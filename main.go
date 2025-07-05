@@ -29,6 +29,7 @@ func main() {
 
 	cmds := commands.NewCommands()
 
+	cmds.Register("reset", commands.HandlerReset)
 	cmds.Register("login", commands.HandlerLogin)
 	cmds.Register("register", commands.HandlerRegister)
 
