@@ -2,6 +2,8 @@
 
 A command-line RSS feed aggregator built in Go. Gator allows you to manage RSS feeds, follow your favorite sources, and browse the latest posts all from your terminal.
 
+**🚀 Quick Start:** Get up and running in minutes with our interactive setup script!
+
 ## Features
 
 - 🔐 User authentication and management
@@ -21,39 +23,60 @@ Before installing Gator, make sure you have the following installed:
 
 ## Installation
 
-Install Gator using Go's built-in package manager:
+### Quick Setup (Recommended)
+
+For the easiest setup experience, clone the repository and run the setup script:
 
 ```bash
-go install github.com/karprabha/gator@latest
+git clone https://github.com/karprabha/gator.git
+cd gator
+./setup.sh
 ```
 
-This will install the `gator` binary to your `$GOPATH/bin` directory. Make sure this directory is in your `PATH`.
+The setup script will:
 
-## Setup
+- ✅ Check if Go and PostgreSQL are installed
+- ✅ Help you create and configure the database
+- ✅ Install the goose migration tool
+- ✅ Run all database migrations automatically
+- ✅ Create your configuration file
+- ✅ Build and install the gator binary
+- ✅ Optionally set up example users and feeds
 
-### 1. Database Setup
+### Manual Installation
 
-First, create a PostgreSQL database for Gator:
+If you prefer to set up manually:
 
-```sql
-CREATE DATABASE gator;
-```
+1. **Install Gator:**
 
-### 2. Configuration
+   ```bash
+   go install github.com/karprabha/gator@latest
+   ```
 
-Create a configuration file at `~/.gatorconfig.json` with your database connection string:
+2. **Database Setup:**
 
-```json
-{
-  "db_url": "postgres://username:password@localhost/gator?sslmode=disable"
-}
-```
+   ```sql
+   CREATE DATABASE gator;
+   ```
 
-Replace `username`, `password`, and database connection details with your PostgreSQL credentials.
+3. **Install migration tool:**
 
-### 3. Database Schema
+   ```bash
+   go install github.com/pressly/goose/v3/cmd/goose@latest
+   ```
 
-Run the database migrations to set up the required tables. The application will handle schema creation automatically when you run your first command.
+4. **Run migrations:**
+
+   ```bash
+   goose -dir sql/schema postgres "postgres://username:password@localhost/gator?sslmode=disable" up
+   ```
+
+5. **Create configuration file at `~/.gatorconfig.json`:**
+   ```json
+   {
+     "db_url": "postgres://username:password@localhost/gator?sslmode=disable"
+   }
+   ```
 
 ## Usage
 
@@ -153,6 +176,35 @@ cd gator
 go build -o gator
 ```
 
+### Setup Script Options
+
+The `setup.sh` script provides several options for different use cases:
+
+```bash
+./setup.sh          # Complete setup (default)
+./setup.sh setup    # Complete setup
+./setup.sh db       # Database setup only
+./setup.sh migrate  # Run migrations only
+./setup.sh config   # Create config file only
+./setup.sh install  # Install gator binary only
+./setup.sh help     # Show help message
+```
+
+### Managing Database Migrations
+
+To run migrations manually:
+
+```bash
+# Up migrations
+goose -dir sql/schema postgres "your_db_url" up
+
+# Down migrations
+goose -dir sql/schema postgres "your_db_url" down
+
+# Migration status
+goose -dir sql/schema postgres "your_db_url" status
+```
+
 ### Database Schema
 
 The application uses the following main tables:
@@ -192,28 +244,48 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Troubleshooting
 
+### Quick Fix
+
+If you're having setup issues, try running the setup script which handles most common problems automatically:
+
+```bash
+git clone https://github.com/karprabha/gator.git
+cd gator
+./setup.sh
+```
+
 ### Common Issues
 
 **"Error reading config"**
 
 - Make sure `~/.gatorconfig.json` exists and has valid JSON
 - Check that your database URL is correct
+- Try running `./setup.sh config` to recreate the config file
 
 **"Error opening database"**
 
 - Verify PostgreSQL is running
 - Check your database credentials
 - Ensure the database exists
+- Try running `./setup.sh db` to reconfigure the database
 
 **"Unknown command"**
 
 - Check command spelling
 - Run `gator` without arguments to see usage
+- Make sure gator is installed: `./setup.sh install`
 
 **Database connection issues**
 
 - Verify your `db_url` in the config file
 - Test database connectivity with `psql`
 - Check firewall and network settings
+- Try running `./setup.sh migrate` to ensure schema is up to date
+
+**Migration issues**
+
+- Make sure goose is installed: `go install github.com/pressly/goose/v3/cmd/goose@latest`
+- Run migrations manually: `./setup.sh migrate`
+- Check migration status: `goose -dir sql/schema postgres "your_db_url" status`
 
 For more help, please open an issue on the [GitHub repository](https://github.com/karprabha/gator).
