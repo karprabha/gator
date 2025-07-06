@@ -36,6 +36,7 @@ func main() {
 	cmds.Register("login", commands.HandlerLogin)
 	cmds.Register("users", commands.HandlerUsers)
 	cmds.Register("register", commands.HandlerRegister)
+	cmds.Register("browse", middleware.MiddlewareLoggedIn(commands.HandlerBrowse))
 	cmds.Register("follow", middleware.MiddlewareLoggedIn(commands.HandlerFollow))
 	cmds.Register("addfeed", middleware.MiddlewareLoggedIn(commands.HandlerAddfeed))
 	cmds.Register("unfollow", middleware.MiddlewareLoggedIn(commands.HandlerUnfollow))

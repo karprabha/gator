@@ -4,28 +4,30 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/karprabha/gator/internal/database"
 	"github.com/karprabha/gator/internal/feed"
 )
 
 func HandlerAgg(s *State, cmd Command) error {
-	if len(cmd.Args) == 0 {
-		return fmt.Errorf("agg command requires time_between_reqs argument")
+	if len(cmd.Args) < 1 || len(cmd.Args) > 2 {
+		return fmt.Errorf("usage: %v <time_between_reqs>", cmd.Name)
 	}
 
 	timeBetweenRequests, err := time.ParseDuration(cmd.Args[0])
 	if err != nil {
-		return fmt.Errorf("invalid time_between_reqs argument: %w", err)
+		return fmt.Errorf("invalid duration: %w", err)
 	}
 
-	fmt.Printf("Collecting feeds every %s\n", timeBetweenRequests)
+	log.Printf("Collecting feeds every %s...", timeBetweenRequests)
 
 	ticker := time.NewTicker(timeBetweenRequests)
 
 	for ; ; <-ticker.C {
-		fmt.Println("Scraping feeds...")
 		scrapeFeeds(s)
 	}
 }
@@ -55,8 +57,39 @@ func scrapeFeeds(s *State) error {
 	}
 
 	for _, item := range parsedFeed.Channel.Item {
-		fmt.Println(" -", item.Title)
+		publishedAt := sql.NullTime{}
+		if t, err := time.Parse(time.RFC1123Z, item.PubDate); err == nil {
+			publishedAt = sql.NullTime{
+				Time:  t,
+				Valid: true,
+			}
+		}
+
+		createPostParams := database.CreatePostParams{
+			ID:        uuid.New(),
+			CreatedAt: time.Now().UTC(),
+			UpdatedAt: time.Now().UTC(),
+			FeedID:    feedToFetch.ID,
+			Title:     item.Title,
+			Description: sql.NullString{
+				String: item.Description,
+				Valid:  true,
+			},
+			Url:         item.Link,
+			PublishedAt: publishedAt,
+		}
+
+		_, err = s.DB.CreatePost(context.Background(), createPostParams)
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				continue
+			}
+			log.Printf("Couldn't create post: %v", err)
+			continue
+		}
 	}
+
+	log.Printf("Feed %s collected, %v posts found", parsedFeed.Channel.Title, len(parsedFeed.Channel.Item))
 
 	return nil
 }
