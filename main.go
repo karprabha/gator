@@ -9,6 +9,7 @@ import (
 	"github.com/karprabha/gator/internal/commands"
 	"github.com/karprabha/gator/internal/config"
 	"github.com/karprabha/gator/internal/database"
+	"github.com/karprabha/gator/internal/middleware"
 	_ "github.com/lib/pq"
 )
 
@@ -34,10 +35,10 @@ func main() {
 	cmds.Register("reset", commands.HandlerReset)
 	cmds.Register("login", commands.HandlerLogin)
 	cmds.Register("users", commands.HandlerUsers)
-	cmds.Register("follow", commands.HandlerFollow)
-	cmds.Register("addfeed", commands.HandlerAddfeed)
 	cmds.Register("register", commands.HandlerRegister)
-	cmds.Register("following", commands.HandlerFollowing)
+	cmds.Register("follow", middleware.MiddlewareLoggedIn(commands.HandlerFollow))
+	cmds.Register("addfeed", middleware.MiddlewareLoggedIn(commands.HandlerAddfeed))
+	cmds.Register("following", middleware.MiddlewareLoggedIn(commands.HandlerFollowing))
 
 	args := os.Args
 	if len(args) < 2 {

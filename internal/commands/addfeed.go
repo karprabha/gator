@@ -9,13 +9,7 @@ import (
 	"github.com/karprabha/gator/internal/database"
 )
 
-func HandlerAddfeed(s *State, cmd Command) error {
-	username := s.Cfg.CurrentUser
-	user, err := s.DB.GetUser(context.Background(), username)
-	if err != nil {
-		return fmt.Errorf("failed to get current user: %w", err)
-	}
-
+func HandlerAddfeed(s *State, cmd Command, user database.User) error {
 	if len(cmd.Args) < 2 {
 		return fmt.Errorf("addfeed command requires name and URL arguments")
 	}
@@ -47,7 +41,7 @@ func HandlerAddfeed(s *State, cmd Command) error {
 
 	_, err = s.DB.CreateFeedFollow(context.Background(), newFeedFollow)
 	if err != nil {
-		return fmt.Errorf("failed to create feed follow for user %s: %w", username, err)
+		return fmt.Errorf("failed to create feed follow for user %s: %w", user.Name, err)
 	}
 
 	fmt.Printf("%+v\n", feed)
