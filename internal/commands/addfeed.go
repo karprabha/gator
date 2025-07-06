@@ -1,0 +1,43 @@
+package commands
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/karprabha/gator/internal/database"
+)
+
+func HandlerAddfeed(s *State, cmd Command) error {
+	username := s.Cfg.CurrentUser
+	user, err := s.DB.GetUser(context.Background(), username)
+	if err != nil {
+		return fmt.Errorf("failed to get current user: %w", err)
+	}
+
+	if len(cmd.Args) < 2 {
+		return fmt.Errorf("addfeed command requires name and URL arguments")
+	}
+
+	name := cmd.Args[0]
+	url := cmd.Args[1]
+
+	newFeed := database.CreateFeedParams{
+		ID:        uuid.New(),
+		Name:      name,
+		Url:       url,
+		UserID:    user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	feed, err := s.DB.CreateFeed(context.Background(), newFeed)
+	if err != nil {
+		return fmt.Errorf("failed to create feed: %w", err)
+	}
+
+	fmt.Printf("%+v\n", feed)
+
+	return nil
+}
